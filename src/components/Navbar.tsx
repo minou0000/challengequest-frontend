@@ -452,6 +452,7 @@ const Navbar = ({ variant = 'default', title, onTitleClick }: NavbarProps) => {
             <>
               {!isAuthenticated ? (
                 <>
+                  {/* Login Button - Desktop */}
                   <Button
                     variant="ghost"
                     onClick={() => navigate("/login")}
@@ -459,6 +460,22 @@ const Navbar = ({ variant = 'default', title, onTitleClick }: NavbarProps) => {
                   >
                     {t("navigation.login")}
                   </Button>
+                  {/* Login Button - Mobile */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate("/login")}
+                        className="sm:hidden h-9 w-9 hover:bg-primary/10 transition-colors"
+                      >
+                        <UserIcon className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("navigation.login")}</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <Button
                     variant="hero"
                     onClick={() => navigate("/register")}
