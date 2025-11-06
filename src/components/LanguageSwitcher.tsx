@@ -68,19 +68,22 @@ export const LanguageSwitcher = () => {
           size="sm"
           className="h-8 px-2 hover:bg-primary/10 hover:text-white transition-colors"
         >
-          <span className="text-xs sm:text-sm font-medium uppercase">
-            {currentLanguage.abbreviation}
+          <span className="text-lg sm:text-xl">
+            {currentLanguage.flag}
           </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-32">
+      <DropdownMenuContent align="end" className="w-40">
         {languages.map((language) => (
           <DropdownMenuItem
             key={language.code}
             onClick={() => changeLanguage(language.code)}
             className="flex items-center justify-between cursor-pointer"
           >
-            <span className="text-sm font-medium">{language.nativeName}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{language.flag}</span>
+              <span className="text-sm font-medium">{language.nativeName}</span>
+            </div>
             {i18n.language === language.code && (
               <Check className="h-4 w-4 text-primary" />
             )}
