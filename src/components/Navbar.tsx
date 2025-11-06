@@ -461,21 +461,13 @@ const Navbar = ({ variant = 'default', title, onTitleClick }: NavbarProps) => {
                     {t("navigation.login")}
                   </Button>
                   {/* Login Button - Mobile */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => navigate("/login")}
-                        className="sm:hidden h-9 w-9 hover:bg-primary/10 transition-colors"
-                      >
-                        <UserIcon className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t("navigation.login")}</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <Button
+                    variant="ghost"
+                    onClick={() => navigate("/login")}
+                    className="sm:hidden text-xs px-2 h-9 hover:bg-primary/10 transition-colors"
+                  >
+                    {t("navigation.login")}
+                  </Button>
                   <Button
                     variant="hero"
                     onClick={() => navigate("/register")}
