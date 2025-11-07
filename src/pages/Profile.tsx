@@ -77,11 +77,6 @@ const Profile = () => {
     if (!token) navigate("/login");
   }, [navigate]);
 
-  // Load user profile and challenges
-  const { data: profile, isLoading, error } = useProfile();
-  const { data: userChallenges, isLoading: challengesLoading } = useUserChallenges();
-  const { data: userRank } = useUserRank('ALL_TIME');
-  
   // Calculate stats
   const stats = {
     totalXP: profile?.xp || 0,
