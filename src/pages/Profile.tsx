@@ -17,6 +17,8 @@ import {
   User,
   Edit,
   UserCircle,
+  Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
@@ -59,6 +61,9 @@ const Profile = () => {
   const [usernameData, setUsernameData] = useState({
     newUsername: "",
   });
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
 
   // Load user profile and challenges
   const { data: profile, isLoading, error } = useProfile();
@@ -237,6 +242,96 @@ const Profile = () => {
       });
     } finally {
       setChangingEmail(false);
+    }
+  };
+
+  // Helper function to convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validImageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!validImageTypes.includes(file.type)) {
+      toast({
+        title: "❌ Invalid file type",
+        description: "Please select an image file (PNG, JPG, GIF, or WEBP).",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "❌ File too large",
+        description: "Profile picture must be smaller than 5MB.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    setProfilePicture(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfilePicturePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUploadProfilePicture = async () => {
+    if (!profilePicture) {
+      toast({
+        title: "⚠️ No file selected",
+        description: "Please select a profile picture to upload.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+
+    try {
+      setUploadingPicture(true);
+      const imageData = await fileToBase64(profilePicture);
+      await updateProfileMutation.mutateAsync({ avatar: imageData });
+      
+      toast({
+        title: "✅ Profile picture updated!",
+        description: "Your profile picture has been updated successfully.",
+        duration: 3000,
+        className:
+          "border-green-500 bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-100",
+      });
+
+      // Clear the file input and preview
+      setProfilePicture(null);
+      setProfilePicturePreview(null);
+      
+      // Reset file input
+      const fileInput = document.getElementById('profile-picture-input') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+    } catch (error: any) {
+      toast({
+        title: "❌ Failed to upload profile picture",
+        description: error?.response?.data?.message || error?.message || "An unknown error occurred.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setUploadingPicture(false);
     }
   };
 
@@ -599,7 +694,98 @@ const Profile = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="settings">
+          <TabsContent value="settings" className="space-y-6">
+            {/* Change Profile Picture Section */}
+            <Card className="glass-card border border-border/40 transition-all duration-300 hover:shadow-[0_0_25px_rgba(99,102,241,0.3)]">
+              <CardContent className="p-8 space-y-8">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <ImageIcon className="w-5 h-5 text-primary" /> Profile Picture
+                  </h2>
+                  {uploadingPicture && (
+                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                  )}
+                </div>
+
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  {/* Current/Preview Avatar */}
+                  <div className="relative">
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-[var(--shadow-glow-primary)] border-4 border-background overflow-hidden">
+                      {profilePicturePreview ? (
+                        <img
+                          src={profilePicturePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : profile?.avatar ? (
+                        <img
+                          src={profile.avatar}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-16 h-16 text-primary-foreground" />
+                      )}
+                    </div>
+                    {profilePicturePreview && (
+                      <div className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 border-4 border-background">
+                        <ImageIcon className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload Section */}
+                  <div className="flex-1 space-y-4 w-full md:w-auto">
+                    <div>
+                      <label htmlFor="profile-picture-input" className="cursor-pointer">
+                        <div className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-primary/50 rounded-lg hover:border-primary hover:bg-primary/5 transition-all">
+                          <Upload className="w-5 h-5 text-primary" />
+                          <span className="text-sm font-medium text-primary">
+                            {profilePicture ? 'Change Picture' : 'Upload Picture'}
+                          </span>
+                        </div>
+                      </label>
+                      <input
+                        id="profile-picture-input"
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                        onChange={handleProfilePictureChange}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-muted-foreground mt-2 text-center md:text-left">
+                        Supported formats: PNG, JPG, GIF, WEBP (Max 5MB)
+                      </p>
+                    </div>
+
+                    {profilePicture && (
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button
+                          onClick={handleUploadProfilePicture}
+                          disabled={uploadingPicture}
+                          className="px-6 py-2 bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 transition-all rounded-lg shadow-md"
+                        >
+                          {uploadingPicture && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                          Upload Picture
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setProfilePicture(null);
+                            setProfilePicturePreview(null);
+                            const fileInput = document.getElementById('profile-picture-input') as HTMLInputElement;
+                            if (fileInput) fileInput.value = '';
+                          }}
+                          disabled={uploadingPicture}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Change Password Section */}
             <Card className="glass-card border border-border/40 transition-all duration-300 hover:shadow-[0_0_25px_rgba(99,102,241,0.3)]">
           <CardContent className="p-8 space-y-8">
